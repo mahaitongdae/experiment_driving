@@ -8,6 +8,7 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from PIL.Image import open
 import xml.dom.minidom
+import os
 EGO_LENGTH = 4.8
 EGO_WIDTH = 2.0
 STATE_OTHER_LENGTH = 4.2
@@ -59,6 +60,9 @@ class Render():
         self.ref_path_all = {'left': left_construct_traj, 'straight': straight_construct_traj,
                              'right': right_construct_traj}
         self.frames_num = 0
+        self.log_dir = os.path.join(args.result_dir, 'figures/')
+        os.makedirs(self.log_dir)
+        self.pix_interval = 10
 
     def run(self):
         self._opengl_start()
@@ -289,9 +293,13 @@ class Render():
 
     def _text(self, str, column, loc):
         if loc == 'left':
-            glRasterPos3f(-1, 1.00 - 0.05 * column, 0.0)
+            glRasterPos3f(-0.8, 1.00 - 0.05 * column, 0.0)
         elif loc == 'right':
             glRasterPos3f(0.4, 1.00 - 0.05 * column, 0.0)
+        elif loc == 'lowerleft':
+            glRasterPos3f(-0.8, -0.3 - 0.05 * column, 0.0)
+        elif loc == 'lowerright':
+            glRasterPos3f(0.4, -0.3 - 0.05 * column, 0.0)
         n = len(str)
         for i in range(n):
             glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(str[i]))
@@ -456,24 +464,18 @@ class Render():
             glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(str(i)))
 
 
-
-
-        traj_value = self.shared_list[11]
+        # text mu
         mu = self.shared_list[15][0]
 
-        # for i in range(len(traj_value)):
-        #     if not path_index == i:
-        #         glColor3f(0.3, 0.3, 0.3)
-        #     else:
-        #         glColor3f(0.3, 0.5, 0.1)
-        #     str1 = 'Path ' + str(i) + ' reward: ' + str(traj_value[i][0])[:7]
-        #     self._text(str1, i + 1, 'left')
-        #     str2 = 'Path ' + str(i) + ' collision risk: ' + str(traj_value[i][1])[:7]
-        #     self._text(str2, i + 1, 'right')
-        glColor3f(0.3, 0.3, 0.3)
+        loc_list = ['left','right','lowerleft','lowerright']
         for i in range(len(mu)):
-            str3 = 'mu ' + str(i) + ': ' + str(mu[i])
-            self._text(str3, i + 1, 'right')
+            veh_idx = i // 4
+            if veh_idx % 2 == 0:
+                glColor3f(0.3, 0.3, 0.3)
+            else:
+                glColor3f(0.0, 0.0, 0.0)
+            str3 = 'veh ' + str(veh_idx) + 'mu ' + str(i % 4) + ': ' + str(mu[i])
+            self._text(str3, i % 8 + 1, loc_list[veh_idx//2])
 
         glutSwapBuffers()
 
@@ -482,7 +484,7 @@ class Render():
         glDisable(GL_POLYGON_SMOOTH)
 
         self.frames_num += 1
-        if self.frames_num % 20 == 0:
+        if self.frames_num % self.pix_interval == 0:
             pPixelData = np.zeros([SIZE, SIZE, 4], np.uint8)
             glPixelStorei(GL_PACK_ALIGNMENT, 1)
             glReadPixels(0, 0, SIZE, SIZE, GL_RGBA, GL_UNSIGNED_BYTE, pPixelData)
@@ -492,7 +494,7 @@ class Render():
             image[:,:,:-1] = image_rgb
             # return image
             name_pic = str(self.frames_num)+'.png'
-            path = './Figure/' + name_pic
+            path = self.log_dir + name_pic
             cv2.imwrite(path, image)
 
 

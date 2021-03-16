@@ -78,7 +78,7 @@ def built_parser():
         parser.add_argument('--load_ite', type=str, default=80000)
     parser.add_argument('--visualization', type=str, default='render')  # plot or render
 
-    parser.add_argument('--noise_factor', type=float, default=6)
+    parser.add_argument('--noise_factor', type=float, default=0)
     parser.add_argument('--model_only_test', type=bool, default=True)
     parser.add_argument('--traffic_step_length', type=float, default=100.)
     parser.add_argument('--traffic_mode', type=str, default='training')
@@ -92,10 +92,8 @@ def built_parser():
     model_only_test = parser.parse_args().model_only_test
     flag = 'model' if model_only_test else 'real'
     noise = int(parser.parse_args().noise_factor)
-    result_dir = load_dir + '/record/noise{noise}/{time}_{flag}'.format(
-        noise=noise,
-        time=datetime.now().strftime("%d_%H%M%S"),
-        flag=flag)
+    result_dir = load_dir + '/record/{time}'.format(
+        time=datetime.now().strftime("%Y_%m_%d_%H%M%S"))
     parser.add_argument('--result_dir', type=str, default=result_dir)
     return parser.parse_args()
 
