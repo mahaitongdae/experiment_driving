@@ -68,10 +68,10 @@ def built_parser():
     parser.add_argument('--if_save', type=bool, default=True)
     task = parser.parse_args().task
     if task == 'left':
-        parser.add_argument('--load_dir', type=str, default='./utils/models/{}/experiment-2021-01-16-10-34-37'.format(task))
-        parser.add_argument('--load_ite', type=str, default=100000)
+        parser.add_argument('--load_dir', type=str, default='./utils/models/{}/experiment-2021-03-15-22-50-31'.format(task))
+        parser.add_argument('--load_ite', type=str, default=180000)
     elif task == 'right':
-        parser.add_argument('--load_dir', type=str, default='./utils/models/{}/experiment-2021-01-16-09-53-14'.format(task))
+        parser.add_argument('--load_dir', type=str, default='./utils/models/{}/experiment-2021-01-16-10-52-05'.format(task))
         parser.add_argument('--load_ite', type=str, default=55000)
     elif task == 'straight':
         parser.add_argument('--load_dir', type=str, default='./utils/models/{}/experiment-2021-01-16-12-10-42'.format(task))
@@ -79,7 +79,7 @@ def built_parser():
     parser.add_argument('--visualization', type=str, default='render')  # plot or render
 
     parser.add_argument('--noise_factor', type=float, default=6)
-    parser.add_argument('--model_only_test', type=bool, default=False)
+    parser.add_argument('--model_only_test', type=bool, default=True)
     parser.add_argument('--traffic_step_length', type=float, default=100.)
     parser.add_argument('--traffic_mode', type=str, default='training')
     parser.add_argument('--clipped_v', type=float, default=5., help='m/s')
@@ -105,7 +105,7 @@ def main():
     os.makedirs(args.result_dir)
     with open(args.result_dir + '/config.json', 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
-    shared_list = mp.Manager().list([0.] * 15)
+    shared_list = mp.Manager().list([0.] * 16)
     # [state_gps, time_gps, state_can, time_can, state_other, time_radar,
     #  step, runtime, decision, state_ego, obs_vec, traj_value, ref_index, v_light]
 

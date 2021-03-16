@@ -1,5 +1,6 @@
 import math
 import time
+import cv2
 import numpy as np
 from math import cos,sin,pi
 from utils.misc import TimerStat
@@ -57,7 +58,7 @@ class Render():
         right_construct_traj = np.load('./map/right_ref.npy')
         self.ref_path_all = {'left': left_construct_traj, 'straight': straight_construct_traj,
                              'right': right_construct_traj}
-
+        self.frames_num = 0
 
     def run(self):
         self._opengl_start()
@@ -446,22 +447,53 @@ class Render():
             plot_phi_line(veh_x, veh_y, veh_phi, 'y', scale)
             _,_,_,_ = draw_vehicle(veh_x, veh_y, veh_phi, veh_l, veh_w, scale, color='y')
 
+        interested_vehs = self.shared_list[10].copy()
+        for i in range(int(len(interested_vehs) / 4)):  # TODO:
+            veh_x = interested_vehs[4 * i + 0]
+            veh_y = interested_vehs[4 * i + 1]
+            glColor3f(1.0, 0.0, 0.0)
+            glRasterPos3f(veh_x/scale, veh_y/scale, 0.0)
+            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(str(i)))
+
+
+
+
         traj_value = self.shared_list[11]
-        for i in range(len(traj_value)):
-            if not path_index == i:
-                glColor3f(0.3, 0.3, 0.3)
-            else:
-                glColor3f(0.3, 0.5, 0.1)
-            str1 = 'Path ' + str(i) + ' reward: ' + str(traj_value[i][0])[:7]
-            self._text(str1, i + 1, 'left')
-            str2 = 'Path ' + str(i) + ' collision risk: ' + str(traj_value[i][1])[:7]
-            self._text(str2, i + 1, 'right')
+        mu = self.shared_list[15][0]
+
+        # for i in range(len(traj_value)):
+        #     if not path_index == i:
+        #         glColor3f(0.3, 0.3, 0.3)
+        #     else:
+        #         glColor3f(0.3, 0.5, 0.1)
+        #     str1 = 'Path ' + str(i) + ' reward: ' + str(traj_value[i][0])[:7]
+        #     self._text(str1, i + 1, 'left')
+        #     str2 = 'Path ' + str(i) + ' collision risk: ' + str(traj_value[i][1])[:7]
+        #     self._text(str2, i + 1, 'right')
+        glColor3f(0.3, 0.3, 0.3)
+        for i in range(len(mu)):
+            str3 = 'mu ' + str(i) + ': ' + str(mu[i])
+            self._text(str3, i + 1, 'right')
 
         glutSwapBuffers()
 
         glDisable(GL_BLEND)
         glDisable(GL_LINE_SMOOTH)
         glDisable(GL_POLYGON_SMOOTH)
+
+        self.frames_num += 1
+        if self.frames_num % 20 == 0:
+            pPixelData = np.zeros([SIZE, SIZE, 4], np.uint8)
+            glPixelStorei(GL_PACK_ALIGNMENT, 1)
+            glReadPixels(0, 0, SIZE, SIZE, GL_RGBA, GL_UNSIGNED_BYTE, pPixelData)
+            image = cv2.flip(pPixelData, 0, dst=None)
+            image_rgb = image[:,:,:-1]
+            image_rgb = image_rgb[:, :, ::-1]
+            image[:,:,:-1] = image_rgb
+            # return image
+            name_pic = str(self.frames_num)+'.png'
+            path = './Figure/' + name_pic
+            cv2.imwrite(path, image)
 
 
     def _texture_light(self, img, loc, edge, scale, size=(8, 3)):

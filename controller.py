@@ -628,20 +628,25 @@ class Controller(object):
             obs, _, _ = self._get_obs(state_gps, state_other, model_flag=model_flag)
             obs_list.append(obs)
         all_obs = tf.convert_to_tensor(obs_list, dtype=tf.float32)
-        obj_vs, con_vs = self.model.values(all_obs)
-        traj_return_value = np.stack([obj_vs.numpy(), con_vs.numpy()], axis=1)
+        # obj_vs, con_vs = self.model.values(all_obs)
+        # traj_return_value = np.stack([obj_vs.numpy(), con_vs.numpy()], axis=1)
+        traj_return_value = np.zeros([4,2])
+        print(traj_return_value.shape)
         path_selection = 0
         path_index = np.argmax(traj_return_value[:, path_selection])
         self.ref_path.set_path(path_index)
         obs, obs_dict, veh_vec = self._get_obs(state_gps, state_other, model_flag=model_flag)
         action = self.model.run(obs)
         obs, action = tf.convert_to_tensor(obs[np.newaxis, :]), tf.convert_to_tensor(action[np.newaxis, :])
-        action, ss_flag = self._safety_sheild(obs, action, con_vs[path_index])
-
+        # action, ss_flag = self._safety_sheild(obs, action, con_vs[path_index])
+        action, ss_flag = self._safety_sheild(obs, action, 0.0)
+        mus = self.model.mu(obs).numpy()
+        # mu = np.max(mus)
         path_dict = OrderedDict({'obj_value': traj_return_value[:, 0].tolist(),
                                  'con_value': traj_return_value[:, 1].tolist(),
                                  'index': [path_index, path_selection],
-                                 'ss_flag': [ss_flag.numpy()]
+                                 'ss_flag': [ss_flag.numpy()],
+                                 'mu': mus
                                  })
         return path_index, traj_return_value, action.numpy(), obs_dict, veh_vec, path_dict
 
@@ -715,6 +720,7 @@ class Controller(object):
                         self.shared_list[11] = traj_return_value
                         self.shared_list[12] = path_index
                         self.shared_list[14] = path_dict['ss_flag'][0]
+                        self.shared_list[15] = path_dict['mu']
 
                     self.step += 1
                 else:  # real test
@@ -809,6 +815,7 @@ class Controller(object):
                             self.shared_list[11] = traj_return_value
                             self.shared_list[12] = path_index  # 13 is v light
                             self.shared_list[14] = path_dict['ss_flag'][0]
+                            self.shared_list[15] = path_dict['mu']
 
                         self.step += 1
 
