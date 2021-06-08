@@ -632,7 +632,7 @@ class Controller(object):
         # traj_return_value = np.stack([obj_vs.numpy(), con_vs.numpy()], axis=1)
         traj_return_value = np.zeros([4,2])
         print(traj_return_value.shape)
-        path_selection = 0
+        path_selection = 1
         path_index = np.argmax(traj_return_value[:, path_selection])
         self.ref_path.set_path(path_index)
         obs, obs_dict, veh_vec = self._get_obs(state_gps, state_other, model_flag=model_flag)

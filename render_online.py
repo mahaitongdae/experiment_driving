@@ -77,7 +77,7 @@ class Render():
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH)
         glutInitContextProfile(GLUT_CORE_PROFILE)
         glutInitWindowSize(SIZE,SIZE)
-        glutInitWindowPosition(460, 0)
+        glutInitWindowPosition(920, 0)
         glutCreateWindow('Crossroad')
         glutDisplayFunc(self.render)
         glutIdleFunc(self.render)

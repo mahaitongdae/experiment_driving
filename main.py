@@ -58,7 +58,7 @@ def plot_agent(shared_list, lock, args):
         plot_.run()
     else:
         render_ = Render(shared_list, lock, args)
-        time.sleep(16)
+        time.sleep(10)
         render_.run()
 
 
