@@ -12,7 +12,7 @@ import os
 import tensorflow as tf
 import numpy as np
 
-from utils.policy import Policy4Toyota, Policy4Lagrange
+from utils.policy import Policy4Toyota, Policy4Lagrange, AttnPolicy4Lagrange
 from utils.preprocessor import Preprocessor
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -26,7 +26,7 @@ class LoadPolicy(object):
         for key, val in params.items():
             parser.add_argument("-" + key, default=val)
         self.args = parser.parse_args()
-        self.policy = Policy4Lagrange(self.args)
+        self.policy = AttnPolicy4Lagrange(self.args)
         self.policy.load_weights(model_dir, iter)
         self.preprocessor = Preprocessor((self.args.obs_dim,), self.args.obs_preprocess_type, self.args.reward_preprocess_type,
                                          self.args.obs_scale, self.args.reward_scale, self.args.reward_shift,
@@ -35,19 +35,19 @@ class LoadPolicy(object):
 
     @tf.function
     def run(self, obs):
-        processed_obs = self.preprocessor.tf_process_obses(obs)
-        action, logp = self.policy.compute_action(processed_obs[np.newaxis, :])
+        processed_obs = self.preprocessor.tf_process_obses(obs[:self.args.obs_dim])
+        action, _ = self.policy.compute_action(processed_obs[np.newaxis, :], obs[self.args.obs_dim:][np.newaxis, :])
         return action[0]
 
-    @tf.function
-    def values(self, obs):
-        processed_obs = self.preprocessor.tf_process_obses(obs)
-        obj_v = self.policy.compute_obj_v(processed_obs)
-        con_v = self.policy.compute_con_v(processed_obs)
-        return obj_v, con_v
+    # @tf.function
+    # def values(self, obs):
+    #     processed_obs = self.preprocessor.tf_process_obses(obs)
+    #     obj_v = self.policy.compute_obj_v(processed_obs)
+    #     con_v = self.policy.compute_con_v(processed_obs)
+    #     return obj_v, con_v
 
     @tf.function
     def mu(self, obs):
-        processed_obs = self.preprocessor.tf_process_obses(obs)
-        mu = self.policy.compute_mu(processed_obs)
-        return mu
+        processed_obs = self.preprocessor.tf_process_obses(obs[:self.args.obs_dim])
+        _, mu = self.policy.compute_mu(processed_obs[np.newaxis, :], obs[self.args.obs_dim:][np.newaxis, :])
+        return tf.reshape(mu,[1, -1])

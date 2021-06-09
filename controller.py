@@ -386,11 +386,13 @@ class Controller(object):
         all_vehicles = state_others
         v_light = int(self.shared_list[13])
         vehs_vector = []
+        padding_vector = []
         name_setting = dict(do='1o', di='1i', ro='2o', ri='2i', uo='3o', ui='3i', lo='4o', li='4i')
 
         def filter_interested_vehicles(vs, task):
             dl, du, dr, rd, rl, ru, ur, ud, ul, lu, lr, ld = [], [], [], [], [], [], [], [], [], [], [], []
             for v in vs:
+                v.update(dict(pad=1.))
                 route_list = v['route']
                 start = route_list[0]
                 end = route_list[1]
@@ -423,8 +425,8 @@ class Controller(object):
                     ld.append(v)
             if self.task != 'right':
                 if v_light != 0 and ego_y < -CROSSROAD_D_HEIGHT:
-                    dl.append(dict(x=LANE_WIDTH_UD/2, y=-CROSSROAD_D_HEIGHT + 2.5, v=0., phi=90, l=5, w=2.5, route=None))
-                    du.append(dict(x=LANE_WIDTH_UD/2, y=-CROSSROAD_D_HEIGHT + 2.5, v=0., phi=90, l=5, w=2.5, route=None))
+                    dl.append(dict(x=LANE_WIDTH_UD/2, y=-CROSSROAD_D_HEIGHT + 2.5, v=0., phi=90, l=5, w=2.5, route=None, pad=0.))
+                    du.append(dict(x=LANE_WIDTH_UD/2, y=-CROSSROAD_D_HEIGHT + 2.5, v=0., phi=90, l=5, w=2.5, route=None, pad=0.))
             # todo: whether add dr for left and straight; right task has no virtual front car
 
             # fetch veh in range
@@ -483,14 +485,14 @@ class Controller(object):
                     while len(sorted_list) < num:
                         sorted_list.append(fill_value)
                     return sorted_list
-            mode2fillvalue = dict(dl=dict(x=LANE_WIDTH_UD/2, y=-(CROSSROAD_D_HEIGHT+30), v=0, phi=90, w=2.5, l=5, route=('1o', '4i')),
-                                  du=dict(x=LANE_WIDTH_UD/2, y=-(CROSSROAD_D_HEIGHT+30), v=0, phi=90, w=2.5, l=5, route=('1o', '3i')),
-                                  dr=dict(x=LANE_WIDTH_UD*(LANE_NUMBER_UD-0.5), y=-(CROSSROAD_D_HEIGHT+30), v=0, phi=90, w=2.5, l=5, route=('1o', '2i')),
-                                  ru=dict(x=(CROSSROAD_HALF_WIDTH+15), y=LANE_WIDTH_LR*(LANE_NUMBER_LR-0.5), v=0, phi=180, w=2.5, l=5, route=('2o', '3i')),
-                                  ur=dict(x=-LANE_WIDTH_UD/2, y=(CROSSROAD_U_HEIGHT+20), v=0, phi=-90, w=2.5, l=5, route=('3o', '2i')),
-                                  ud=dict(x=-LANE_WIDTH_UD*0.5, y=(CROSSROAD_U_HEIGHT+20), v=0, phi=-90, w=2.5, l=5, route=('3o', '1i')),
-                                  ul=dict(x=-LANE_WIDTH_UD*(LANE_NUMBER_UD-0.5), y=(CROSSROAD_U_HEIGHT+20), v=0, phi=-90, w=2.5, l=5, route=('3o', '4i')),
-                                  lr=dict(x=-(CROSSROAD_HALF_WIDTH+20), y=-LANE_WIDTH_LR*1.5, v=0, phi=0, w=2.5, l=5, route=('4o', '2i')))
+            mode2fillvalue = dict(dl=dict(x=LANE_WIDTH_UD/2, y=-(CROSSROAD_D_HEIGHT+30), v=0, phi=90, w=2.5, l=5, route=('1o', '4i'), pad=0.),
+                                  du=dict(x=LANE_WIDTH_UD/2, y=-(CROSSROAD_D_HEIGHT+30), v=0, phi=90, w=2.5, l=5, route=('1o', '3i'), pad=0.),
+                                  dr=dict(x=LANE_WIDTH_UD*(LANE_NUMBER_UD-0.5), y=-(CROSSROAD_D_HEIGHT+30), v=0, phi=90, w=2.5, l=5, route=('1o', '2i'), pad=0.),
+                                  ru=dict(x=(CROSSROAD_HALF_WIDTH+15), y=LANE_WIDTH_LR*(LANE_NUMBER_LR-0.5), v=0, phi=180, w=2.5, l=5, route=('2o', '3i'), pad=0.),
+                                  ur=dict(x=-LANE_WIDTH_UD/2, y=(CROSSROAD_U_HEIGHT+20), v=0, phi=-90, w=2.5, l=5, route=('3o', '2i'), pad=0.),
+                                  ud=dict(x=-LANE_WIDTH_UD*0.5, y=(CROSSROAD_U_HEIGHT+20), v=0, phi=-90, w=2.5, l=5, route=('3o', '1i'), pad=0.),
+                                  ul=dict(x=-LANE_WIDTH_UD*(LANE_NUMBER_UD-0.5), y=(CROSSROAD_U_HEIGHT+20), v=0, phi=-90, w=2.5, l=5, route=('3o', '4i'), pad=0.),
+                                  lr=dict(x=-(CROSSROAD_HALF_WIDTH+20), y=-LANE_WIDTH_LR*1.5, v=0, phi=0, w=2.5, l=5, route=('4o', '2i')), pad=0.)
 
             tmp = OrderedDict()
             for mode, num in VEHICLE_MODE_DICT[task].items():
@@ -504,9 +506,10 @@ class Controller(object):
             list_of_interested_veh_dict.extend(part)
         self.per_veh_info_dim = 4
         for veh in list_of_interested_veh_dict:
-            veh_x, veh_y, veh_v, veh_phi = veh['x'], veh['y'], veh['v'], veh['phi']
+            veh_x, veh_y, veh_v, veh_phi, veh_pad = veh['x'], veh['y'], veh['v'], veh['phi'], veh['pad']
             vehs_vector.extend([veh_x, veh_y, veh_v, veh_phi])
-        return np.array(vehs_vector, dtype=np.float32)
+            padding_vector.extend([veh_pad])
+        return np.array(vehs_vector, dtype=np.float32), np.array(padding_vector, dtype=np.float32)
 
     def _get_obs(self, state_gps, state_others, model_flag):
         if model_flag:
@@ -516,7 +519,7 @@ class Controller(object):
             ego_x, ego_y = state_gps['GaussX'], state_gps['GaussY']
             ego_phi = state_gps['Heading']
             ego_v_x, ego_v_y = state_gps['GpsSpeed'], 0.
-        vehs_vector = self._construct_veh_vector(ego_x, ego_y, state_others)
+        vehs_vector, padding_vector = self._construct_veh_vector(ego_x, ego_y, state_others)
         ego_vector = self._construct_ego_vector(state_gps, model_flag)
         tracking_error = self.ref_path.tracking_error_vector(np.array([ego_x], dtype=np.float32),
                                                              np.array([ego_y], dtype=np.float32),
@@ -524,7 +527,7 @@ class Controller(object):
                                                              np.array([ego_v_x], dtype=np.float32),
                                                              self.num_future_data).numpy()[0]
         self.per_tracking_info_dim = 3
-        vector = np.concatenate((ego_vector, tracking_error, vehs_vector), axis=0)
+        vector = np.concatenate((ego_vector, tracking_error, vehs_vector, padding_vector), axis=0)
         veh_idx_start = self.ego_info_dim + self.per_tracking_info_dim * (self.num_future_data + 1)
 
         noise = np.zeros_like(vector)
@@ -637,10 +640,10 @@ class Controller(object):
         self.ref_path.set_path(path_index)
         obs, obs_dict, veh_vec = self._get_obs(state_gps, state_other, model_flag=model_flag)
         action = self.model.run(obs)
+        mus = self.model.mu(obs).numpy()
         obs, action = tf.convert_to_tensor(obs[np.newaxis, :]), tf.convert_to_tensor(action[np.newaxis, :])
         # action, ss_flag = self._safety_sheild(obs, action, con_vs[path_index])
         action, ss_flag = self._safety_sheild(obs, action, 0.0)
-        mus = self.model.mu(obs).numpy()
         # mu = np.max(mus)
         path_dict = OrderedDict({'obj_value': traj_return_value[:, 0].tolist(),
                                  'con_value': traj_return_value[:, 1].tolist(),
