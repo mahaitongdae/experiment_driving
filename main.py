@@ -58,7 +58,7 @@ def plot_agent(shared_list, lock, args):
         plot_.run()
     else:
         render_ = Render(shared_list, lock, args)
-        time.sleep(16)
+        time.sleep(10)
         render_.run()
 
 
@@ -68,8 +68,8 @@ def built_parser():
     parser.add_argument('--if_save', type=bool, default=True)
     task = parser.parse_args().task
     if task == 'left':
-        parser.add_argument('--load_dir', type=str, default='./utils/models/{}/experiment-2021-06-08-01-15-08'.format(task))
-        parser.add_argument('--load_ite', type=str, default=150000)
+        parser.add_argument('--load_dir', type=str, default='./utils/models/{}/experiment-2021-06-09-10-04-10'.format(task))
+        parser.add_argument('--load_ite', type=str, default=495000)
     elif task == 'right':
         parser.add_argument('--load_dir', type=str, default='./utils/models/{}/experiment-2021-01-16-10-52-05'.format(task))
         parser.add_argument('--load_ite', type=str, default=55000)
