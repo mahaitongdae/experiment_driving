@@ -631,12 +631,11 @@ class Controller(object):
             obs, _, _ = self._get_obs(state_gps, state_other, model_flag=model_flag)
             obs_list.append(obs)
         all_obs = tf.convert_to_tensor(obs_list, dtype=tf.float32)
-        # obj_vs, con_vs = self.model.values(all_obs)
-        # traj_return_value = np.stack([obj_vs.numpy(), con_vs.numpy()], axis=1)
-        traj_return_value = np.zeros([4,2])
-        print(traj_return_value.shape)
-        path_selection = 1
-        path_index = np.argmax(traj_return_value[:, path_selection])
+        obj_vs = self.model.values(all_obs)
+        traj_return_value = np.stack([obj_vs.numpy()], axis=1)
+        print(traj_return_value)
+        # path_index = np.argmax(traj_return_value[:, 0])
+        path_index = 1
         self.ref_path.set_path(path_index)
         obs, obs_dict, veh_vec = self._get_obs(state_gps, state_other, model_flag=model_flag)
         action = self.model.run(obs)
@@ -646,8 +645,8 @@ class Controller(object):
         action, ss_flag = self._safety_sheild(obs, action, 0.0)
         # mu = np.max(mus)
         path_dict = OrderedDict({'obj_value': traj_return_value[:, 0].tolist(),
-                                 'con_value': traj_return_value[:, 1].tolist(),
-                                 'index': [path_index, path_selection],
+                                 'con_value': traj_return_value[:, 0].tolist(),
+                                 'index': [path_index, 0],
                                  'ss_flag': [ss_flag.numpy()],
                                  'mu': mus
                                  })

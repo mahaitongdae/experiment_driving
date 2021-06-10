@@ -11,8 +11,8 @@ import xml.dom.minidom
 import os
 EGO_LENGTH = 4.8
 EGO_WIDTH = 2.0
-STATE_OTHER_LENGTH = 4.2
-STATE_OTHER_WIDTH = 1.8
+STATE_OTHER_LENGTH = 3.8
+STATE_OTHER_WIDTH = 1.6
 SCALE = 60
 SIZE = 1000
 
@@ -357,6 +357,8 @@ class Render():
                 glColor3f(0.2, 0.3, 0.9)
             elif color == 'g':
                 glColor3f(0.5, 1.0, 0.0)
+            elif isinstance(color, list):
+                glColor3f(*color)
             glVertex2f((RU_x + x) / scale, (RU_y + y) / scale)
             glVertex2f((RD_x + x) / scale, (RD_y + y) / scale)
             glVertex2f((LD_x + x) / scale, (LD_y + y) / scale)
@@ -450,18 +452,23 @@ class Render():
             veh_x = veh['x']
             veh_y = veh['y']
             veh_phi = veh['phi']
-            veh_l = STATE_OTHER_LENGTH
-            veh_w = STATE_OTHER_WIDTH
             plot_phi_line(veh_x, veh_y, veh_phi, 'y', scale)
-            _,_,_,_ = draw_vehicle(veh_x, veh_y, veh_phi, veh_l, veh_w, scale, color='y')
+            _,_,_,_ = draw_vehicle(veh_x, veh_y, veh_phi, STATE_OTHER_LENGTH, STATE_OTHER_WIDTH, scale, color='y')
 
         interested_vehs = self.shared_list[10].copy()
+        mu = self.shared_list[15][0]
+        mu /= np.max(mu)
         for i in range(int(len(interested_vehs) / 4)):  # TODO:
             veh_x = interested_vehs[4 * i + 0]
             veh_y = interested_vehs[4 * i + 1]
-            glColor3f(1.0, 0.0, 0.0)
-            glRasterPos3f(veh_x/scale, veh_y/scale, 0.0)
-            glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(str(i)))
+            veh_phi = interested_vehs[4 * i + 3]
+            veh_mu = np.max(mu[4 * i : 4 * i + 4])
+            if -50 < veh_y < 50:
+                _, _, _, _ = draw_vehicle(veh_x, veh_y, veh_phi, STATE_OTHER_LENGTH, STATE_OTHER_WIDTH, scale,
+                                          color=[veh_mu, 1 - veh_mu, 0.878 * (1-veh_mu)])
+            # glColor3f(1.0, 0.0, 0.0)
+            # glRasterPos3f(veh_x/scale, veh_y/scale, 0.0)
+            # glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(str(i)))
 
 
         # text mu
