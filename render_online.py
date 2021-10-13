@@ -474,15 +474,15 @@ class Render():
         # text mu
         mu = self.shared_list[15][0]
 
-        loc_list = ['left','right','lowerleft','lowerright']
-        for i in range(len(mu)):
-            veh_idx = i // 4
-            if veh_idx % 2 == 0:
-                glColor3f(0.3, 0.3, 0.3)
-            else:
-                glColor3f(0.0, 0.0, 0.0)
-            str3 = 'veh ' + str(veh_idx) + 'mu ' + str(i % 4) + ': ' + str(mu[i])
-            self._text(str3, i % 8 + 1, loc_list[veh_idx//2])
+        # loc_list = ['left','right','lowerleft','lowerright']
+        # for i in range(len(mu)):
+        #     veh_idx = i // 4
+        #     if veh_idx % 2 == 0:
+        #         glColor3f(0.3, 0.3, 0.3)
+        #     else:
+        #         glColor3f(0.0, 0.0, 0.0)
+        #     str3 = 'veh ' + str(veh_idx) + 'mu ' + str(i % 4) + ': ' + str(mu[i])
+        #     self._text(str3, i % 8 + 1, loc_list[veh_idx//2])
 
         glutSwapBuffers()
 

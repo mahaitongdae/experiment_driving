@@ -633,10 +633,10 @@ class Controller(object):
         all_obs = tf.convert_to_tensor(obs_list, dtype=tf.float32)
         obj_vs = self.model.values(all_obs)
         traj_return_value = np.stack([obj_vs.numpy()], axis=1)
-        print(traj_return_value)
-        # path_index = np.argmax(traj_return_value[:, 0])
-        path_index = 1
-        self.ref_path.set_path(path_index)
+        # print(traj_return_value)
+        path_index = np.argmax(traj_return_value[:, 0])
+        path_index = 0
+        # self.ref_path.set_path(path_index)
         obs, obs_dict, veh_vec = self._get_obs(state_gps, state_other, model_flag=model_flag)
         action = self.model.run(obs)
         mus = self.model.mu(obs).numpy()
@@ -865,9 +865,9 @@ if __name__ == "__main__":
                                                     args.task, args.noise_factor, args.load_dir,
                                                     args.load_ite, args.result_dir, args.model_only_test,
                                                     args.clipped_v)
-    ref_path = ReferencePath('left')
-    for i in range(4):
-        ref_path.set_path(i)
-        print(ref_path.ref_index)
-        path = ref_path.path
-        print(ref_path.path)
+    # ref_path = ReferencePath('left')
+    # for i in range(4):
+    #     ref_path.set_path(i)
+    #     print(ref_path.ref_index)
+    #     path = ref_path.path
+    #     print(ref_path.path)
