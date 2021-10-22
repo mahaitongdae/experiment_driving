@@ -822,15 +822,9 @@ class Controller(object):
                         self.step += 1
 
                 if self.if_save:
-                    with self.lock:
-                        phi_list = self.shared_list[16].copy()
-                    phi_dict = {'phi': phi_list[0], 'phi_d': phi_list[1], 'phi_dotd':phi_list[2]}
-
                     if decision != {} and state_ego != {} and state_other != {}:
                         file_handle.write("Decision ")
                         for k1, v1 in decision.items():
-                            file_handle.write(k1 + ":" + str(v1) + ", ")
-                        for k1, v1 in phi_dict.items():
                             file_handle.write(k1 + ":" + str(v1) + ", ")
                         file_handle.write('\n')
 
@@ -848,11 +842,9 @@ class Controller(object):
                         file_handle.write('\n')
 
                         file_handle.write("Path ")
-                        # for k4, v4 in path_dict.items():
-                        #     file_handle.write(k4 + ":" + str(v4) + "| ")
+                        for k4, v4 in path_dict.items():
+                            file_handle.write(k4 + ":" + str(v4) + "| ")
                         file_handle.write('\n')
-
-
 
                         file_handle.write("Time Time:" + str(self.run_time) + ", " +
                                           "time_decision:"+str(time_decision) + ", " +

@@ -13,9 +13,8 @@ EGO_LENGTH = 4.8
 EGO_WIDTH = 2.0
 STATE_OTHER_LENGTH = 3.8
 STATE_OTHER_WIDTH = 1.6
-SCALE = 40
-SIZE = 900
-PIX_INTERVAL = 5
+SCALE = 60
+SIZE = 1000
 
 def rotate_coordination(orig_x, orig_y, orig_d, coordi_rotate_d):
     """
@@ -63,7 +62,7 @@ class Render():
         self.frames_num = 0
         self.log_dir = os.path.join(args.result_dir, 'figures/')
         os.makedirs(self.log_dir)
-        self.pix_interval = PIX_INTERVAL
+        self.pix_interval = 10
 
     def run(self):
         self._opengl_start()
@@ -341,7 +340,7 @@ class Render():
 
         # draw ref
         path_index = self.shared_list[12]
-        self._plot_reference(self.task, 3, scale)
+        self._plot_reference(self.task, path_index, scale)
 
         # draw vehicles
         def draw_vehicle(x, y, a, l, w, scale, color='o', details=True):
@@ -420,20 +419,7 @@ class Render():
         ego_y = state_ego['GaussY']
         ego_phi = state_ego['Heading']
         decision = self.shared_list[8].copy()
-        phi = self.shared_list[16].copy()
         acc = decision['a_x']
-        steer = decision['SteerAngleAim']
-        glColor3f(0.0, 0.0, 0.0)
-        str_acc = 'Acceleration: ' + str(acc)[:5]
-        str_steer = 'Steering: ' + str(steer)[:5]
-        str_phi = 'phi:' + str(phi[0])[:5]
-        str_phi_d = 'd:' + str(phi[1])[:5]
-        str_phi_dot_d = 'dot_d:' + str(phi[2])[:5]
-        self._text(str_acc, 1, 'left')
-        self._text(str_steer, 2, 'left')
-        for (i, item) in enumerate([str_phi, str_phi_d, str_phi_dot_d]):
-            self._text(item, i+1, 'right')
-
 
         # draw safety shield
         ss_flag = self.shared_list[14]
@@ -477,9 +463,9 @@ class Render():
             veh_y = interested_vehs[4 * i + 1]
             veh_phi = interested_vehs[4 * i + 3]
             veh_mu = np.max(mu[4 * i : 4 * i + 4])
-            # if -50 < veh_y < 50:
-                # _, _, _, _ = draw_vehicle(veh_x, veh_y, veh_phi, STATE_OTHER_LENGTH, STATE_OTHER_WIDTH, scale,
-                #                           color=[1, 0, 0.878]) # color=[veh_mu, 1 - veh_mu, 0.878 * (1-veh_mu)]
+            if -50 < veh_y < 50:
+                _, _, _, _ = draw_vehicle(veh_x, veh_y, veh_phi, STATE_OTHER_LENGTH, STATE_OTHER_WIDTH, scale,
+                                          color=[veh_mu, 1 - veh_mu, 0.878 * (1-veh_mu)])
             # glColor3f(1.0, 0.0, 0.0)
             # glRasterPos3f(veh_x/scale, veh_y/scale, 0.0)
             # glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, ord(str(i)))
