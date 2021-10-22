@@ -103,7 +103,7 @@ def main():
     os.makedirs(args.result_dir)
     with open(args.result_dir + '/config.json', 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
-    shared_list = mp.Manager().list([0.] * 16)
+    shared_list = mp.Manager().list([0.] * 17)
     # [state_gps, time_gps, state_can, time_can, state_other, time_radar,
     #  step, runtime, decision, state_ego, obs_vec, traj_value, ref_index, v_light]
 

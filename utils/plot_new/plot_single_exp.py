@@ -1,8 +1,12 @@
 import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+
 from utils.plot_new.plot_utils.load_record import load_data
 from utils.plot_new.plot_utils.search_index import search_geq,search_leq,search_automode_index
 import os
 from utils.endtoend_env_utils import *
+import pandas as pd
 
 
 def single_plot(data_all, keys, path, title, **kwargs):
@@ -23,7 +27,20 @@ def single_plot(data_all, keys, path, title, **kwargs):
     if 'fig_num' in kwargs.keys():
         plt.figure(kwargs['fig_num'])
     else:
-        plt.figure(dpi=200)
+        plt.figure(dpi=200, figsize=[6,2])
+
+    sns.set(style="darkgrid")
+    sns.set_palette([(0.12156862745098039, 0.4666666666666667, 0.7058823529411765),
+                     # (1.0, 0.4980392156862745, 0.054901960784313725),
+                     (0.17254901960784313, 0.6274509803921569, 0.17254901960784313),
+                     (0.5803921568627451, 0.403921568627451, 0.7411764705882353),
+                     (0.8392156862745098, 0.15294117647058825, 0.1568627450980392),
+                     # (0.5490196078431373, 0.33725490196078434, 0.29411764705882354),
+                     # (0.8901960784313725, 0.4666666666666667, 0.7607843137254902),
+                     # (0.4980392156862745, 0.4980392156862745, 0.4980392156862745),
+                     (0.7372549019607844, 0.7411764705882353, 0.13333333333333333),
+                     (0.09019607843137255, 0.7450980392156863, 0.8117647058823529)]
+                    )
 
     task = model_index.split('/')[0]
     model_or_real = exp_index.split('_')[-1]
@@ -39,16 +56,23 @@ def single_plot(data_all, keys, path, title, **kwargs):
             except (KeyError):
                 print('No key {} in record!'.format(key))
         else:
-            try:
-                plt.plot(data_all['Time'], data_all[key])
-                if isinstance(data_all[key][0], list):
-                    for i in range(len(data_all[key][0])):
-                        n_key = key + str(i)
-                        labels.append(n_key)
-                else:
-                    labels.append(key)
-            except (KeyError):
-                print('No key {} in record!'.format(key))
+            # try:
+            init_time = kwargs['init_time'] if kwargs['init_time'] else 0
+            phi_bias = kwargs['phi_bias'] if kwargs['phi_bias'] else 0
+            data_dict = {'time':np.array(data_all['Time']) - init_time, 'data':np.array(data_all[key]) + phi_bias}
+            data_df = pd.DataFrame(data_dict)
+            sns.lineplot(x='time', y='data', data=data_df,# hue="algorithm", err_kws={'alpha': 0.1},
+                          linewidth=2, legend=False  # palette=palette,
+                         )
+            # plt.plot(np.array(data_all['Time']) - init_time, )
+            if isinstance(data_all[key][0], list):
+                for i in range(len(data_all[key][0])):
+                    n_key = key + str(i)
+                    labels.append(n_key)
+            else:
+                labels.append(key)
+            # except (KeyError):
+            #     print('No key {} in record!'.format(key))
 
     if isinstance(keys[0], tuple):
         plt.xlabel(keys[0][0])
@@ -90,7 +114,7 @@ def single_plot(data_all, keys, path, title, **kwargs):
 
 
     plt.legend(labels=labels, loc='best')
-    plt.grid()
+    # plt.grid()
 
     if 'x_lim' in kwargs.keys():
         plt.xlim(kwargs['x_lim'])
@@ -106,7 +130,9 @@ def single_plot(data_all, keys, path, title, **kwargs):
         os.mkdir(fig_path)
         os.mkdir(data_fig_path)
     name = data_fig_path + title +'.jpg'
+    plt.tight_layout(pad=0.5)
     plt.savefig(name)
+    return data_df
 
 
 def single_plot_time_series(data_all, path,):
@@ -205,16 +231,52 @@ def single_plot_obs_other_vehicles(data_all, path, others_num = 6):
 
 
 if __name__ == '__main__':
-    exp_index = 'noise0/16_184851_real'
-    model_index = 'right/experiment-2021-01-16-09-53-14'
+    exp_index = '2021_10_22_141914'
+    model_index = 'left/experiment-2021-09-27-14-33-44'
     data_all, keys_for_data = load_data(model_index, exp_index)
     print(keys_for_data)
     path = (exp_index, model_index)
 
     # plots whose x-axis is time
-    single_plot_time_series(data_all, path) # if not switch into auto mode, add kwargs: VehicleMode=False
-    # plots whose x-axis is not time, for example trajectory
-    single_plot_other_series(data_all, path)
-    # for convenience
-    single_plot_obs_other_vehicles(data_all, path)
-    single_plot_compare_response(data_all, path)
+    df1 = single_plot(data_all, ['phi'],
+                path=path, title='phi',x_lim=[0, 9], y_lim=[-50,10], init_time=15.715962409973145, phi_bias=-3) # CPO
+    df1['case'] = 'CPO(baseline)'
+
+    exp_index = '2021_10_22_144726'
+    model_index = 'left/experiment-2021-09-27-14-33-44'
+    data_all, keys_for_data = load_data(model_index, exp_index)
+    print(keys_for_data)
+    path = (exp_index, model_index)
+
+    # plots whose x-axis is time
+    df2 = single_plot(data_all, ['phi'],
+                path=path, title='phi',x_lim=[0, 9], y_lim=[-70,10], init_time=13.324288129806519, phi_bias=15) # left SSAC
+    df2['case'] = 'SSAC left'
+
+    exp_index = '2021_10_22_145357'
+    model_index = 'left/experiment-2021-09-27-14-33-44'
+    data_all, keys_for_data = load_data(model_index, exp_index)
+    print(keys_for_data)
+    path = (exp_index, model_index)
+
+
+    # plots whose x-axis is time
+    df3 = single_plot(data_all, ['phi'],
+            path=path, title='phi',x_lim=[0, 9], y_lim=[-70,10], init_time=12.82133173942566, phi_bias=18, legend=False) # right SSAC
+    df3['case'] = 'SSAC right'
+    df = pd.concat([df2, df3, df1, ])
+    plt.figure(dpi=200, figsize=[6,2])
+    ax1 = plt.axes()
+    sns.set_style('darkgrid')
+    sns.lineplot(x='time', y='data', data=df, hue='case',linewidth=2,)
+    handles, labels = ax1.get_legend_handles_labels()
+    labels = ['SSAC left', 'SSAC right', 'CPO (baseline)']
+    # if base:
+    basescore = sns.lineplot(x=[0., 10.], y=[0.0, 0.0], linewidth=1, color='grey', linestyle='--')
+    ax1.legend(handles=handles + [basescore.lines[-1]], labels=labels + ['threshold'], loc='best',
+               frameon=False, fontsize=9, ncol=4)
+    plt.ylim([-70, 10])
+    plt.xlim([0,10])
+    plt.ylabel(r'$\phi$')
+    plt.tight_layout(pad=0.5)
+    plt.savefig('/home/mahaitong/PycharmProjects/experiment_driving/utils/plot_new/plot_utils/phi.png')

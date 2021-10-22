@@ -15,6 +15,9 @@ import sys
 import time
 from collections import defaultdict
 from math import fabs, cos, sin, pi
+
+import numpy as np
+
 from utils.endtoend_env_utils import TASK2ROUTEID, L, W
 
 if 'SUMO_HOME' in os.environ:
@@ -283,6 +286,36 @@ class Traffic(object):
 
         self.n_ego_collision_flag = flag_dict
 
+    def compute_phi(self):
+        interested_vehs = self.shared_list[10].copy()
+        state_ego = self.shared_list[9]
+        ego_x = state_ego['GaussX']  # intersection coordinate [m]
+        ego_y = state_ego['GaussY']  # intersection coordinate [m]
+        ego_phi = state_ego['Heading'] / 180 * np.pi  # intersection coordinate [deg]
+        ego_v = state_ego['GpsSpeed']
+
+        phi = -1e8
+        for i in range(int(len(interested_vehs)/4)):
+            veh_x = interested_vehs[4 * i + 0]
+            veh_y = interested_vehs[4 * i + 1]
+            veh_v = interested_vehs[4 * i + 2]
+            veh_phi = interested_vehs[4 * i + 3] / 180 * np.pi
+            # print(veh_phi)
+
+            d = np.sqrt(np.square(ego_x-veh_x)+np.square(ego_y-veh_y))
+            angle_0 = np.arctan((veh_y-ego_y)/(veh_x-ego_x))
+            dotd_ego = ego_v * np.sin(ego_phi - angle_0)
+            dotd_veh = veh_v * np.sin(veh_phi - angle_0)
+            dot_d = dotd_ego - dotd_veh
+            phi_candidate = 0.04 + 2.5 ** 2 - d ** 2 - 1 * dot_d
+            if phi_candidate > phi:
+                print("d: {:.3f}, dot_d:{:.3f}, phi:{:.3f}".format(d, dot_d, phi_candidate))
+                phi = phi_candidate
+                phi_d = d
+                phi_dotd = dot_d
+        return phi, phi_d, phi_dotd
+
+
     def is_triggered(self, model_only_test, vehicle_mode):
         if model_only_test:
             self.trigger = True
@@ -301,6 +334,7 @@ class Traffic(object):
         while True:
             time.sleep(self.step_length/1000-0.01)
             state_ego = self.shared_list[9]
+            phi, phi_d, phi_dotd = 0,0,0
             if isinstance(state_ego, dict):
                 ego_x = state_ego['GaussX']  # intersection coordinate [m]
                 ego_y = state_ego['GaussY']  # intersection coordinate [m]
@@ -313,17 +347,21 @@ class Traffic(object):
                     if self.trigger:
                         self.init_traffic(dict(ego=out))
                         self._get_vehicles()
+                    phi, phi_d, phi_dotd = 0,0,0
                 else:
                     self.set_own_car(dict(ego=out))
+                    phi, phi_d, phi_dotd = self.compute_phi()
                     self.sim_step()
                     v_light = self.v_light
                 state_other = self.n_ego_vehicles['ego']
             delta_time = time.time() - start_time
             start_time = time.time()
 
+
             with self.lock:
                 self.shared_list[4] = state_other.copy()
                 self.shared_list[5] = delta_time
                 self.shared_list[13] = v_light
+                self.shared_list[16] = [phi, phi_d, phi_dotd]
 
 
